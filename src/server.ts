@@ -5,6 +5,7 @@ import { pino } from "pino";
 
 import { openAPIRouter } from "@/api-docs/openAPIRouter";
 import { healthCheckRouter } from "@/api/healthCheck/healthCheckRouter";
+import { patientRouter } from "@/api/patient/patientRouter";
 import { userRouter } from "@/api/user/userRouter";
 import errorHandler from "@/common/middleware/errorHandler";
 import rateLimiter from "@/common/middleware/rateLimiter";
@@ -29,13 +30,17 @@ app.use(rateLimiter);
 app.use(requestLogger);
 
 // Routes
-app.use("/api/legacy", createProxyMiddleware({
+app.use(
+  "/api/legacy",
+  createProxyMiddleware({
     target: env.LEGACY_TARGET_SERVER, // Replace with actual target server
     changeOrigin: true, // Modifies the "Host" header
-    pathRewrite: { "^/api/legacy": "" } // Remove "/api" prefix when forwarding
-}));
+    pathRewrite: { "^/api/legacy": "" }, // Remove "/api" prefix when forwarding
+  }),
+);
 app.use("/health-check", healthCheckRouter);
 app.use("/users", userRouter);
+app.use("/patients", patientRouter);
 
 // Swagger UI
 app.use(openAPIRouter);
