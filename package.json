@@ -1,7 +1,7 @@
 {
-  "name": "bloom-health",
+  "name": "bloom-health-react-backend",
   "version": "0.0.1",
-  "description": "bloom Hospital management",
+  "description": "bloom health react backend",
   "author": "Sachin Patidar",
   "main": "index.ts",
   "private": true,
