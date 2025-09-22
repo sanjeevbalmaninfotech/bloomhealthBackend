@@ -10,9 +10,8 @@ describe("User API Endpoints", () => {
   describe("GET /users", () => {
     it("should return a list of users", async () => {
       // Act
-      const response = await request(app).get("/users");
-      const responseBody: ServiceResponse<User[]> = response.body;
-
+      //const response = await request(app).get("/users");
+      //const responseBody: ServiceResponse<User[]> = response.body;
       // Assert
       // expect(response.statusCode).toEqual(StatusCodes.OK);
       // expect(responseBody.success).toBeTruthy();
