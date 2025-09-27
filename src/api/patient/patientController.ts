@@ -101,6 +101,63 @@ class PatientController {
     return handleServiceResponse(failure, res);
   };
 
+  public legacyLogin: RequestHandler = async (req: Request, res: Response) => {
+    try {
+      const body = req.body as { email?: string; password?: string };
+      if (!body.email) {
+        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
+          "Email is required",
+          null,
+          400,
+        );
+        return handleServiceResponse(failure, res);
+      }
+
+      const existing = await patientCosmosRepository.findByEmailAsync(body.email);
+      if (!existing) {
+        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
+          "User not found",
+          null,
+          404,
+        );
+        return handleServiceResponse(failure, res);
+      }
+
+      // If password provided, verify and return token
+      if (body.password) {
+        const valid = await bcrypt.compare(body.password, (existing.password as string) || "");
+        if (!valid) {
+          const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
+            "Invalid credentials",
+            null,
+            401,
+          );
+          return handleServiceResponse(failure, res);
+        }
+
+        const token = jwt.sign({ sub: existing.id, email: existing.email }, env.JWT_SECRET, { expiresIn: "1h" });
+        const success = (await import("@/common/models/serviceResponse")).ServiceResponse.success("Logged in", {
+          token,
+        });
+        return handleServiceResponse(success, res);
+      }
+
+      // No password -> send OTP (reuse sendOtp path by patient id)
+      // If patient has id, call sendOtp logic directly
+      const fakeReq: any = { body: { patientId: existing.id } };
+      const fakeRes: any = res;
+      await (this.sendOtp as any)(fakeReq, fakeRes);
+      return;
+    } catch (ex) {
+      const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
+        "Error during login",
+        null,
+        500,
+      );
+      return handleServiceResponse(failure, res);
+    }
+  };
+
   public loginWithPhone: RequestHandler = async (req: Request, res: Response) => {
     const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
       "Endpoint removed - use /start-login then /send-otp",

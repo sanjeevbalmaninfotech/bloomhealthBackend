@@ -53,6 +53,16 @@ patientRegistry.registerPath({
 
 patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientController.register);
 
+// compatibility login endpoint (supports email+password or email-only for OTP)
+patientRegistry.registerPath({
+  method: "post",
+  path: "/patients/login",
+  tags: ["Patient"],
+  request: { body: { content: { "application/json": { schema: LoginPatientSchema.shape.body } } } },
+  responses: createApiResponse(z.object({ token: z.string().optional(), message: z.string().optional() }), "Success"),
+});
+patientRouter.post("/login", patientController.legacyLogin);
+
 patientRegistry.registerPath({
   method: "post",
   path: "/patients/loginId",

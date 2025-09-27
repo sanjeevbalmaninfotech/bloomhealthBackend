@@ -5,13 +5,9 @@ import type { ServiceResponse } from "@/common/models/serviceResponse";
 import { app } from "@/server";
 
 describe("Patient API Endpoints", () => {
+  const testEmail = `john+${Date.now()}@example.com`;
   describe("GET /patients", () => {
-    it("should return a list of patients", async () => {
-      // Intentionally left commented - depends on DB/mock setup
-      // const response = await request(app).get("/patients");
-      // const responseBody: ServiceResponse<any[]> = response.body;
-      // expect(response.statusCode).toEqual(StatusCodes.OK);
-    });
+    it("should return a list of patients", async () => {});
   });
 
   describe("GET /patients/:id", () => {
@@ -42,7 +38,7 @@ describe("Patient API Endpoints", () => {
 
   describe("POST /patients/register", () => {
     it("should accept a valid registration payload", async () => {
-      const payload = { firstName: "John", lastName: "Doe", email: "john@example.com", password: "secret123" };
+      const payload = { firstName: "John", lastName: "Doe", email: testEmail, password: "secret123" };
       const response = await request(app).post("/patients/register").send(payload);
       const responseBody: ServiceResponse = response.body;
 
@@ -55,7 +51,7 @@ describe("Patient API Endpoints", () => {
 
   describe("POST /patients/login", () => {
     it("should accept valid login and return token", async () => {
-      const payload = { email: "john@example.com", password: "secret123" };
+      const payload = { email: testEmail, password: "secret123" };
       const response = await request(app).post("/patients/login").send(payload);
       const responseBody: ServiceResponse = response.body;
 
@@ -68,7 +64,7 @@ describe("Patient API Endpoints", () => {
 
   describe("POST /patients/login (OTP)", () => {
     it("should send OTP when email exists", async () => {
-      const payload = { email: "john@example.com" };
+      const payload = { email: testEmail };
       const response = await request(app).post("/patients/login").send(payload);
       const responseBody: ServiceResponse = response.body;
 
