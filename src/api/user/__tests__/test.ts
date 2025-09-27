@@ -29,9 +29,9 @@ describe("User  API", () => {
 
   it("should delete a user", async () => {
     const response = await request(app).post("/api/users").send({ name: "Jane Doe" });
-    const userId = response.body.id;
+    const patientId = response.body.id;
 
-    const deleteResponse = await request(app).delete(`/api/users/${userId}`);
+    const deleteResponse = await request(app).delete(`/api/users/${patientId}`);
     expect(deleteResponse.statusCode).toBe(204);
   });
 });

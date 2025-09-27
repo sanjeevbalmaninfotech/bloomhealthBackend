@@ -65,4 +65,26 @@ describe("Patient API Endpoints", () => {
       expect((responseBody.responseObject as any).token).toBeTruthy();
     });
   });
+
+  describe("POST /patients/login (OTP)", () => {
+    it("should send OTP when email exists", async () => {
+      const payload = { email: "john@example.com" };
+      const response = await request(app).post("/patients/login").send(payload);
+      const responseBody: ServiceResponse = response.body;
+
+      expect(response.statusCode).toEqual(StatusCodes.OK);
+      expect(responseBody.success).toBeTruthy();
+    });
+  });
+
+  describe("POST /patients/verify-otp", () => {
+    it("should return 400 for invalid otp", async () => {
+      const payload = { phoneCountryCode: "+1", phoneNumber: "5551234567", otp: "000000" };
+      const response = await request(app).post("/patients/verify-otp").send(payload);
+      const responseBody: ServiceResponse = response.body;
+
+      expect(response.statusCode).toBeGreaterThanOrEqual(400);
+      expect(responseBody.success).toBeFalsy();
+    });
+  });
 });

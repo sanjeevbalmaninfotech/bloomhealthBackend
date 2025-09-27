@@ -7,9 +7,18 @@ extendZodWithOpenApi(z);
 
 export type Patient = z.infer<typeof PatientSchema>;
 export const PatientSchema = z.object({
-  id: z.number(),
+  // allow id to be string or number because request bodies often send IDs as strings
+  id: z.union([z.string(), z.number()]),
   firstName: z.string(),
   lastName: z.string(),
+  email: z.string().email(),
+  password: z.string().optional(),
+  phoneCountryCode: z.string().optional(),
+  phoneNumber: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  otp: z.string().optional(),
+  otpExpiry: z.date().optional(),
   dob: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -26,6 +35,10 @@ export const RegisterPatientSchema = z.object({
     lastName: z.string().min(1),
     email: z.string().email(),
     password: z.string().min(6),
+    phoneCountryCode: z.string().optional(),
+    phoneNumber: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
   }),
 });
 
@@ -35,3 +48,44 @@ export const LoginPatientSchema = z.object({
     password: z.string().min(6),
   }),
 });
+
+export const LoginWithPhoneSchema = z.object({
+  body: z.object({
+    phoneCountryCode: z.string().min(1),
+    phoneNumber: z.string().min(4),
+  }),
+});
+
+// Older phone-based verify removed in favor of patientId-based flow
+// For auth flows we accept patientId as either string or number (clients often send strings)
+export const VerifyOtpSchema = z.object({
+  body: z.object({
+    patientId: z.union([z.string(), z.number()]),
+    otp: z.string().min(4),
+  }),
+});
+
+export const StartLoginSchema = z.object({
+  body: z.object({
+    patientId: z.union([z.string(), z.number()]),
+  }),
+});
+
+export const SendOtpSchema = z.object({
+  body: z.object({
+    patientId: z.union([z.string(), z.number()]),
+  }),
+});
+
+export const ResendOtpSchema = z.object({
+  body: z.object({
+    patientId: z.union([z.string(), z.number()]),
+  }),
+});
+
+export const EmailLoginBody = z.object({ email: z.string().email() }).openapi({ title: "EmailLoginBody" });
+export const PhoneLoginBody = z
+  .object({ phoneCountryCode: z.string().min(1), phoneNumber: z.string().min(4) })
+  .openapi({ title: "PhoneLoginBody" });
+
+export const LoginRequestSchema = z.object({ body: z.union([EmailLoginBody, PhoneLoginBody]) });

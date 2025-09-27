@@ -3,7 +3,18 @@ import express, { type Router } from "express";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
-import { GetPatientSchema, LoginPatientSchema, PatientSchema, RegisterPatientSchema } from "@/api/patient/patientModel";
+import {
+  GetPatientSchema,
+  LoginPatientSchema,
+  LoginRequestSchema,
+  LoginWithPhoneSchema,
+  PatientSchema,
+  RegisterPatientSchema,
+  ResendOtpSchema,
+  SendOtpSchema,
+  StartLoginSchema,
+  VerifyOtpSchema,
+} from "@/api/patient/patientModel";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { patientController } from "./patientController";
 
@@ -44,10 +55,43 @@ patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientC
 
 patientRegistry.registerPath({
   method: "post",
-  path: "/patients/login",
+  path: "/patients/loginId",
   tags: ["Patient"],
-  request: { body: { content: { "application/json": { schema: LoginPatientSchema.shape.body } } } },
+  request: { body: { content: { "application/json": { schema: StartLoginSchema.shape.body } } } },
+  responses: createApiResponse(
+    z.object({ phoneCountryCode: z.string().optional(), phoneNumber: z.string().optional() }),
+    "Success",
+  ),
+});
+
+patientRouter.post("/start-login", validateRequest(StartLoginSchema), patientController.startLogin);
+
+patientRegistry.registerPath({
+  method: "post",
+  path: "/patients/send-otp",
+  tags: ["Patient"],
+  request: { body: { content: { "application/json": { schema: SendOtpSchema.shape.body } } } },
+  responses: createApiResponse(z.object({ message: z.string() }), "Success"),
+});
+
+patientRouter.post("/send-otp", validateRequest(SendOtpSchema), patientController.sendOtp);
+
+patientRegistry.registerPath({
+  method: "post",
+  path: "/patients/resend-otp",
+  tags: ["Patient"],
+  request: { body: { content: { "application/json": { schema: ResendOtpSchema.shape.body } } } },
+  responses: createApiResponse(z.object({ message: z.string() }), "Success"),
+});
+
+patientRouter.post("/resend-otp", validateRequest(ResendOtpSchema), patientController.resendOtp);
+
+patientRegistry.registerPath({
+  method: "post",
+  path: "/patients/verify-otp",
+  tags: ["Patient"],
+  request: { body: { content: { "application/json": { schema: VerifyOtpSchema.shape.body } } } },
   responses: createApiResponse(z.object({ token: z.string() }), "Success"),
 });
 
-patientRouter.post("/login", validateRequest(LoginPatientSchema), patientController.login);
+patientRouter.post("/verify-otp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);

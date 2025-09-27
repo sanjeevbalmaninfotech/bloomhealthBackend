@@ -1,16 +1,12 @@
 import { StatusCodes } from "http-status-codes";
 
+import { patientCosmosRepository } from "@/api/patient/patientCosmosRepository";
 import type { Patient } from "@/api/patient/patientModel";
-import { PatientRepository } from "@/api/patient/patientRepository";
 import { ServiceResponse } from "@/common/models/serviceResponse";
 import { logger } from "@/server";
 
 export class PatientService {
-  private patientRepository: PatientRepository;
-
-  constructor(repository: PatientRepository = new PatientRepository()) {
-    this.patientRepository = repository;
-  }
+  private patientRepository = patientCosmosRepository as any;
 
   async findAll(): Promise<ServiceResponse<Patient[] | null>> {
     try {
