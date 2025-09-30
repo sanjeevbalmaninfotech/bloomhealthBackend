@@ -39,7 +39,13 @@ patientRegistry.registerPath({
   method: "post",
   path: "/patients/register",
   tags: ["Patient"],
-  request: { body: { content: { "application/json": { schema: RegisterPatientSchema.shape.body } } } },
+  request: {
+    body: {
+      content: {
+        "application/json": { schema: RegisterPatientSchema.shape.body },
+      },
+    },
+  },
   responses: createApiResponse(PatientSchema, "Success"),
 });
 
@@ -47,9 +53,16 @@ patientRegistry.registerPath({
   method: "post",
   path: "/patients/loginId",
   tags: ["Patient"],
-  request: { body: { content: { "application/json": { schema: StartLoginSchema.shape.body } } } },
+  request: {
+    body: {
+      content: { "application/json": { schema: StartLoginSchema.shape.body } },
+    },
+  },
   responses: createApiResponse(
-    z.object({ phoneCountryCode: z.string().optional(), phoneNumber: z.string().optional() }),
+    z.object({
+      phoneCountryCode: z.string().optional(),
+      phoneNumber: z.string().optional(),
+    }),
     "Success",
   ),
 });
@@ -58,7 +71,11 @@ patientRegistry.registerPath({
   method: "post",
   path: "/patients/sendOtp",
   tags: ["Patient"],
-  request: { body: { content: { "application/json": { schema: SendOtpSchema.shape.body } } } },
+  request: {
+    body: {
+      content: { "application/json": { schema: SendOtpSchema.shape.body } },
+    },
+  },
   responses: createApiResponse(z.object({ message: z.string() }), "Success"),
 });
 
@@ -66,7 +83,11 @@ patientRegistry.registerPath({
   method: "post",
   path: "/patients/resendOtp",
   tags: ["Patient"],
-  request: { body: { content: { "application/json": { schema: ResendOtpSchema.shape.body } } } },
+  request: {
+    body: {
+      content: { "application/json": { schema: ResendOtpSchema.shape.body } },
+    },
+  },
   responses: createApiResponse(z.object({ message: z.string() }), "Success"),
 });
 
@@ -74,7 +95,11 @@ patientRegistry.registerPath({
   method: "post",
   path: "/patients/verifyOtp",
   tags: ["Patient"],
-  request: { body: { content: { "application/json": { schema: VerifyOtpSchema.shape.body } } } },
+  request: {
+    body: {
+      content: { "application/json": { schema: VerifyOtpSchema.shape.body } },
+    },
+  },
   responses: createApiResponse(z.object({ token: z.string() }), "Success"),
 });
 
@@ -83,5 +108,5 @@ patientRouter.get("/getPatient/:id", patientController.getPatient);
 patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientController.register);
 patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientController.matchLoginId);
 patientRouter.post("/sendOtp", validateRequest(SendOtpSchema), patientController.sendOtp);
-patientRouter.post("/resendOtp", validateRequest(ResendOtpSchema), patientController.resendOtp);
+
 patientRouter.post("/verifyOtp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
