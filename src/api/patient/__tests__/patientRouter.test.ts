@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import request from "supertest";
 
-import type { ServiceResponse } from "@/common/models/serviceResponse";
+import type { ServiceResponse, myResponse } from "@/common/models/serviceResponse";
 import { app } from "@/server";
 
 describe("Patient API Endpoints", () => {
@@ -38,7 +38,12 @@ describe("Patient API Endpoints", () => {
 
   describe("POST /patients/register", () => {
     it("should accept a valid registration payload", async () => {
-      const payload = { firstName: "John", lastName: "Doe", email: testEmail, password: "secret123" };
+      const payload = {
+        firstName: "John",
+        lastName: "Doe",
+        email: testEmail,
+        password: "secret123",
+      };
       const response = await request(app).post("/patients/register").send(payload);
       const responseBody: ServiceResponse = response.body;
 
@@ -75,9 +80,13 @@ describe("Patient API Endpoints", () => {
 
   describe("POST /patients/verify-otp", () => {
     it("should return 400 for invalid otp", async () => {
-      const payload = { phoneCountryCode: "+1", phoneNumber: "5551234567", otp: "000000" };
+      const payload = {
+        phoneCountryCode: "+1",
+        phoneNumber: "5551234567",
+        otp: "000000",
+      };
       const response = await request(app).post("/patients/verify-otp").send(payload);
-      const responseBody: ServiceResponse = response.body;
+      const responseBody: myResponse = response.body;
 
       expect(response.statusCode).toBeGreaterThanOrEqual(400);
       expect(responseBody.success).toBeFalsy();
