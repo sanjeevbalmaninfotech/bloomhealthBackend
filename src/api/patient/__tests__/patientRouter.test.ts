@@ -1,7 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import request from "supertest";
 
-import type { ServiceResponse, myResponse } from "@/common/models/serviceResponse";
+import type { myResponse } from "@/common/models/serviceResponse";
 import { app } from "@/server";
 
 describe("Patient API Endpoints", () => {
@@ -17,7 +17,7 @@ describe("Patient API Endpoints", () => {
 
       // Act
       const response = await request(app).get(`/patients/${testId}`);
-      const responseBody: ServiceResponse = response.body;
+      const responseBody: myResponse = response.body;
 
       // Assert
       expect(response.statusCode).toEqual(StatusCodes.NOT_FOUND);
@@ -28,7 +28,7 @@ describe("Patient API Endpoints", () => {
     it("should return a bad request for invalid ID format", async () => {
       const invalidInput = "abc";
       const response = await request(app).get(`/patients/${invalidInput}`);
-      const responseBody: ServiceResponse = response.body;
+      const responseBody: myResponse = response.body;
 
       expect(response.statusCode).toEqual(StatusCodes.BAD_REQUEST);
       expect(responseBody.success).toBeFalsy();
@@ -45,7 +45,7 @@ describe("Patient API Endpoints", () => {
         password: "secret123",
       };
       const response = await request(app).post("/patients/register").send(payload);
-      const responseBody: ServiceResponse = response.body;
+      const responseBody: myResponse = response.body;
 
       expect(response.statusCode).toEqual(StatusCodes.OK);
       expect(responseBody.success).toBeTruthy();
@@ -58,7 +58,7 @@ describe("Patient API Endpoints", () => {
     it("should accept valid login and return token", async () => {
       const payload = { email: testEmail, password: "secret123" };
       const response = await request(app).post("/patients/login").send(payload);
-      const responseBody: ServiceResponse = response.body;
+      const responseBody: myResponse = response.body;
 
       expect(response.statusCode).toEqual(StatusCodes.OK);
       expect(responseBody.success).toBeTruthy();
@@ -71,7 +71,7 @@ describe("Patient API Endpoints", () => {
     it("should send OTP when email exists", async () => {
       const payload = { email: testEmail };
       const response = await request(app).post("/patients/login").send(payload);
-      const responseBody: ServiceResponse = response.body;
+      const responseBody: myResponse = response.body;
 
       expect(response.statusCode).toEqual(StatusCodes.OK);
       expect(responseBody.success).toBeTruthy();
