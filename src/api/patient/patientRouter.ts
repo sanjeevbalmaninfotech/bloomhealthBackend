@@ -5,7 +5,6 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import {
   GetPatientSchema,
-  LoginSchema,
   PatientSchema,
   RegisterPatientSchema,
   ResendOtpSchema,

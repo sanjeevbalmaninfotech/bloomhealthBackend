@@ -81,5 +81,3 @@ export const PhoneLoginBody = z
     phoneNumber: z.string().min(4),
   })
   .openapi({ title: "PhoneLoginBody" });
-
-// Compatibility schema for tes/logints/clients that POST to /patients
