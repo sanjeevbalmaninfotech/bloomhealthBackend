@@ -85,8 +85,6 @@ patientRegistry.registerPath({
   ),
 });
 
-// Alias: support POST /patients/login used by tests/clients (email/password or OTP)
-// Provide compatibility POST /patients/login which tests expect
 patientRegistry.registerPath({
   method: "post",
   path: "/patients/login",
@@ -163,6 +161,3 @@ patientRouter.post("/login", validateRequest(LoginSchema), patientController.log
 
 patientRouter.post("/verifyOtp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
 // Accept only the canonical routes (/verifyOtp)
-
-// Compatibility: hyphenated route
-patientRouter.post("/verify-otp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
