@@ -3,7 +3,8 @@ import express, { type Request, type Response, type Router } from "express";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
-import { ServiceResponse } from "@/common/models/serviceResponse";
+
+import { myResponse } from "@/common/models/serviceResponse";
 import { handleServiceResponse } from "@/common/utils/httpHandlers";
 
 export const healthCheckRegistry = new OpenAPIRegistry();
@@ -17,6 +18,6 @@ healthCheckRegistry.registerPath({
 });
 
 healthCheckRouter.get("/", (_req: Request, res: Response) => {
-  const serviceResponse = ServiceResponse.success("Service is healthy", null);
+  const serviceResponse = myResponse.success("Service is healthy", null);
   return handleServiceResponse(serviceResponse, res);
 });
