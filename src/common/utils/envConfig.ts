@@ -14,12 +14,6 @@ export const env = cleanEnv(process.env, {
   LEGACY_TARGET_SERVER: str({ devDefault: testOnly("http://localhost:3000") }),
   COMMON_RATE_LIMIT_MAX_REQUESTS: num({ devDefault: testOnly(1000) }),
   COMMON_RATE_LIMIT_WINDOW_MS: num({ devDefault: testOnly(1000) }),
-  // DB_SERVER is optional because many deployments use Cosmos DB only.
-  DB_SERVER: str({ devDefault: testOnly("") }),
-  DB_USER: str({ devDefault: testOnly("") }),
-  DB_PASS: str({ devDefault: testOnly("") }),
-  DB_NAME: str({ devDefault: testOnly("") }),
-  DB_PORT: num({ devDefault: testOnly(1433) }),
 
   COSMOS_ENDPOINT: str({ devDefault: testOnly("https://localhost:8081/") }),
   COSMOS_KEY: str({ devDefault: testOnly("C2y6yDjf5/R+ob0N8A7Cgv30VRGj==") }),
@@ -29,4 +23,6 @@ export const env = cleanEnv(process.env, {
   TWILIO_ACCOUNT_SID: str({ devDefault: testOnly("") }),
   TWILIO_AUTH_TOKEN: str({ devDefault: testOnly("") }),
   TWILIO_PHONE_NUMBER: str({ devDefault: testOnly("") }),
+
+  MAIN_NODE_API_URL: str({ devDefault: testOnly("http://localhost:8080") }),
 });

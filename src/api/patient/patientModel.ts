@@ -12,14 +12,14 @@ export const PatientSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   email: z.string().email(),
-  password: z.string().optional(),
+
   phoneCountryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   otp: z.string().optional(),
   otpExpiry: z.date().optional(),
-  dob: z.string(),
+
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -34,7 +34,6 @@ export const RegisterPatientSchema = z.object({
     firstName: z.string().min(1),
     lastName: z.string().min(1),
     email: z.string().email(),
-    password: z.string().min(6),
     phoneCountryCode: z.string().optional(),
     phoneNumber: z.string().optional(),
     city: z.string().optional(),
@@ -42,21 +41,6 @@ export const RegisterPatientSchema = z.object({
   }),
 });
 
-export const LoginPatientSchema = z.object({
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-  }),
-});
-
-export const LoginWithPhoneSchema = z.object({
-  body: z.object({
-    phoneCountryCode: z.string().min(1),
-    phoneNumber: z.string().min(4),
-  }),
-});
-
-// Older phone-based verify removed in favor of patientId-based flow
 // For auth flows we accept patientId as either string or number (clients often send strings)
 export const VerifyOtpSchema = z.object({
   body: z.object({
@@ -87,5 +71,3 @@ export const EmailLoginBody = z.object({ email: z.string().email() }).openapi({ 
 export const PhoneLoginBody = z
   .object({ phoneCountryCode: z.string().min(1), phoneNumber: z.string().min(4) })
   .openapi({ title: "PhoneLoginBody" });
-
-export const LoginRequestSchema = z.object({ body: z.union([EmailLoginBody, PhoneLoginBody]) });

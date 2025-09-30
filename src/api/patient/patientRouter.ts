@@ -5,9 +5,6 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import {
   GetPatientSchema,
-  LoginPatientSchema,
-  LoginRequestSchema,
-  LoginWithPhoneSchema,
   PatientSchema,
   RegisterPatientSchema,
   ResendOtpSchema,
@@ -25,24 +22,19 @@ patientRegistry.register("Patient", PatientSchema);
 
 patientRegistry.registerPath({
   method: "get",
-  path: "/patients",
+  path: "/patients/getPatients",
   tags: ["Patient"],
   responses: createApiResponse(z.array(PatientSchema), "Success"),
 });
 
-patientRouter.get("/", patientController.getPatients);
-
 patientRegistry.registerPath({
   method: "get",
-  path: "/patients/{id}",
+  path: "/patients/getPatient/{id}",
   tags: ["Patient"],
   request: { params: GetPatientSchema.shape.params },
   responses: createApiResponse(PatientSchema, "Success"),
 });
 
-patientRouter.get("/:id", validateRequest(GetPatientSchema), patientController.getPatient);
-
-// Register and Login paths
 patientRegistry.registerPath({
   method: "post",
   path: "/patients/register",
@@ -50,18 +42,6 @@ patientRegistry.registerPath({
   request: { body: { content: { "application/json": { schema: RegisterPatientSchema.shape.body } } } },
   responses: createApiResponse(PatientSchema, "Success"),
 });
-
-patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientController.register);
-
-// compatibility login endpoint (supports email+password or email-only for OTP)
-patientRegistry.registerPath({
-  method: "post",
-  path: "/patients/login",
-  tags: ["Patient"],
-  request: { body: { content: { "application/json": { schema: LoginPatientSchema.shape.body } } } },
-  responses: createApiResponse(z.object({ token: z.string().optional(), message: z.string().optional() }), "Success"),
-});
-patientRouter.post("/login", patientController.legacyLogin);
 
 patientRegistry.registerPath({
   method: "post",
@@ -74,34 +54,34 @@ patientRegistry.registerPath({
   ),
 });
 
-patientRouter.post("/start-login", validateRequest(StartLoginSchema), patientController.startLogin);
-
 patientRegistry.registerPath({
   method: "post",
-  path: "/patients/send-otp",
+  path: "/patients/sendOtp",
   tags: ["Patient"],
   request: { body: { content: { "application/json": { schema: SendOtpSchema.shape.body } } } },
   responses: createApiResponse(z.object({ message: z.string() }), "Success"),
 });
 
-patientRouter.post("/send-otp", validateRequest(SendOtpSchema), patientController.sendOtp);
-
 patientRegistry.registerPath({
   method: "post",
-  path: "/patients/resend-otp",
+  path: "/patients/resendOtp",
   tags: ["Patient"],
   request: { body: { content: { "application/json": { schema: ResendOtpSchema.shape.body } } } },
   responses: createApiResponse(z.object({ message: z.string() }), "Success"),
 });
 
-patientRouter.post("/resend-otp", validateRequest(ResendOtpSchema), patientController.resendOtp);
-
 patientRegistry.registerPath({
   method: "post",
-  path: "/patients/verify-otp",
+  path: "/patients/verifyOtp",
   tags: ["Patient"],
   request: { body: { content: { "application/json": { schema: VerifyOtpSchema.shape.body } } } },
   responses: createApiResponse(z.object({ token: z.string() }), "Success"),
 });
 
-patientRouter.post("/verify-otp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
+patientRouter.get("/getPatients", patientController.getPatients);
+patientRouter.get("/getPatient/:id", patientController.getPatient);
+patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientController.register);
+patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientController.matchLoginId);
+patientRouter.post("/sendOtp", validateRequest(SendOtpSchema), patientController.sendOtp);
+patientRouter.post("/resendOtp", validateRequest(ResendOtpSchema), patientController.resendOtp);
+patientRouter.post("/verifyOtp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);

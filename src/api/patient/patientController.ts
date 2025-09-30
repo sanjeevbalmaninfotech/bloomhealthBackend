@@ -7,7 +7,15 @@ import { handleServiceResponse } from "@/common/utils/httpHandlers";
 import { sendEmail } from "@/utils/email";
 import { sendMessage } from "@/utils/sms";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+
+import { deleteOtpForPatient, getOtpForPatient, setOtpForPatient } from "@/api/patient/otpCache";
+import { myResponse, myResponseSchema } from "@/common/models/serviceResponse";
+import axios from "axios";
+
+import { getPatientContact } from "@/utils/getPatientFromNode/getPatientFromNode";
+import { validateContact } from "@/utils/getPatientFromNode/patientInfoValidation";
+
+const MAIN_NODE_API_URL = env.MAIN_NODE_API_URL;
 
 class PatientController {
   public getPatients: RequestHandler = async (_req: Request, res: Response) => {
@@ -16,6 +24,7 @@ class PatientController {
   };
 
   public getPatient: RequestHandler = async (req: Request, res: Response) => {
+    console.log("getPatient called with id:", req.params.id);
     const id = Number.parseInt(req.params.id as string, 10);
     const serviceResponse = await patientService.findById(id);
     return handleServiceResponse(serviceResponse, res);
@@ -34,14 +43,9 @@ class PatientController {
         state?: string;
       };
 
-      // Check existing user by email
       const existing = await patientCosmosRepository.findByEmailAsync(email);
       if (existing) {
-        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-          "Email already registered",
-          null,
-          400,
-        );
+        const failure = myResponse.failure("Email already registered", null, 400);
         return handleServiceResponse(failure, res);
       }
 
@@ -49,11 +53,7 @@ class PatientController {
       if (phoneCountryCode && phoneNumber) {
         const byPhone = await patientCosmosRepository.findByPhoneAsync(phoneCountryCode, phoneNumber);
         if (byPhone) {
-          const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-            "Phone number already registered",
-            null,
-            400,
-          );
+          const failure = myResponse.failure("Phone number already registered", null, 400);
           return handleServiceResponse(failure, res);
         }
       }
@@ -76,133 +76,50 @@ class PatientController {
       // @ts-ignore
       created.password = undefined;
 
-      const success = (await import("@/common/models/serviceResponse")).ServiceResponse.success(
-        "Patient registered",
-        created,
-      );
+      const success = myResponse.success("Patient registered", created);
       return handleServiceResponse(success, res);
     } catch (ex) {
-      const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-        "Error registering patient",
-        null,
-        500,
-      );
+      const failure = myResponse.failure("Error registering patient", null, 500);
       return handleServiceResponse(failure, res);
     }
-  };
-
-  public login: RequestHandler = async (req: Request, res: Response) => {
-    // older email/phone union login replaced by the multi-step flow
-    const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-      "Endpoint removed - use /start-login then /send-otp",
-      null,
-      410,
-    );
-    return handleServiceResponse(failure, res);
-  };
-
-  public legacyLogin: RequestHandler = async (req: Request, res: Response) => {
-    try {
-      const body = req.body as { email?: string; password?: string };
-      if (!body.email) {
-        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-          "Email is required",
-          null,
-          400,
-        );
-        return handleServiceResponse(failure, res);
-      }
-
-      const existing = await patientCosmosRepository.findByEmailAsync(body.email);
-      if (!existing) {
-        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-          "User not found",
-          null,
-          404,
-        );
-        return handleServiceResponse(failure, res);
-      }
-
-      // If password provided, verify and return token
-      if (body.password) {
-        const valid = await bcrypt.compare(body.password, (existing.password as string) || "");
-        if (!valid) {
-          const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-            "Invalid credentials",
-            null,
-            401,
-          );
-          return handleServiceResponse(failure, res);
-        }
-
-        const token = jwt.sign({ sub: existing.id, email: existing.email }, env.JWT_SECRET, { expiresIn: "1h" });
-        const success = (await import("@/common/models/serviceResponse")).ServiceResponse.success("Logged in", {
-          token,
-        });
-        return handleServiceResponse(success, res);
-      }
-
-      // No password -> send OTP (reuse sendOtp path by patient id)
-      // If patient has id, call sendOtp logic directly
-      const fakeReq: any = { body: { patientId: existing.id } };
-      const fakeRes: any = res;
-      await (this.sendOtp as any)(fakeReq, fakeRes);
-      return;
-    } catch (ex) {
-      const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-        "Error during login",
-        null,
-        500,
-      );
-      return handleServiceResponse(failure, res);
-    }
-  };
-
-  public loginWithPhone: RequestHandler = async (req: Request, res: Response) => {
-    const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-      "Endpoint removed - use /start-login then /send-otp",
-      null,
-      410,
-    );
-    return handleServiceResponse(failure, res);
   };
 
   // Step 1: start-login - return masked phone details for given user id
-  public startLogin: RequestHandler = async (req: Request, res: Response) => {
+  public matchLoginId: RequestHandler = async (req: Request, res: Response) => {
     try {
       const body = req.body as { patientId?: string | number };
-      const id = body.patientId;
-      console.log("startLogin called with body:", id);
-      const existing = await patientCosmosRepository.findByIdAsync(id as string | number);
-      if (!existing) {
-        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-          "Patient not found",
-          null,
-          404,
-        );
+      const patientId = body.patientId;
+      if (!patientId) {
+        const failure = myResponse.failure("patientId is required", null, 400);
         return handleServiceResponse(failure, res);
       }
 
-      // mask phone number for privacy (show last 2-4 digits depending length)
-      const cc = existing.phoneCountryCode || undefined;
-      const num = existing.phoneNumber || undefined;
-      let masked: string | undefined = undefined;
-      if (num) {
-        const visible = Math.min(4, Math.max(2, Math.floor(num.length / 2)));
-        masked = num.slice(0, 1) + "*".repeat(Math.max(0, num.length - visible - 1)) + num.slice(num.length - visible);
+      const response = await axios.get(`${MAIN_NODE_API_URL}/patient/${patientId}`);
+
+      const patientMobileNumber = response?.data?.data?.Results?.PhoneNumber;
+      const patientCountryCode = response?.data?.data?.Results?.PhoneCode;
+
+      //  const existing = await patientCosmosRepository.findByIdAsync(id as string | number);
+      if (!patientMobileNumber && !patientCountryCode) {
+        const failure = myResponse.failure("Patient not found", null, 404);
+        return handleServiceResponse(failure, res);
       }
 
-      const success = (await import("@/common/models/serviceResponse")).ServiceResponse.success("User found", {
-        phoneCountryCode: cc,
-        phoneNumber: masked,
+      let masked: string | undefined = undefined;
+      const visible = Math.min(4, Math.max(2, Math.floor(patientMobileNumber.length / 2)));
+      masked =
+        patientMobileNumber.slice(0, 1) +
+        "*".repeat(Math.max(0, patientMobileNumber.length - visible - 1)) +
+        patientMobileNumber.slice(patientMobileNumber.length - visible);
+
+      const success = myResponse.success("Patient found", {
+        patientCountryCode,
+        masked,
       });
       return handleServiceResponse(success, res);
     } catch (ex) {
-      const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-        "Error during start-login",
-        null,
-        500,
-      );
+      console.error("Error in matchLoginId:", ex);
+      const failure = myResponse.failure("Error during start-login", ex, 500);
       return handleServiceResponse(failure, res);
     }
   };
@@ -210,121 +127,84 @@ class PatientController {
   // Step 2: send-otp - generate and send otp for patientId
   public sendOtp: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const { patientId } = req.body as { patientId: number };
-      const existing = await patientCosmosRepository.findByIdAsync(patientId);
-      if (!existing) {
-        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-          "User not found",
-          null,
-          404,
-        );
+      const { patientId, mobileNumber, countryCode } = req.body as {
+        patientId: string;
+        mobileNumber?: string;
+        countryCode?: string;
+      };
+
+      if (!patientId || !mobileNumber || !countryCode) {
+        const failure = myResponse.failure("PatientId, mobileNumber and countryCode are required", null, 404);
         return handleServiceResponse(failure, res);
+      }
+
+      const patientContact = await getPatientContact(patientId);
+
+      if (!patientContact.mobileNumber || !patientContact.countryCode) {
+        const failure = myResponse.failure("Patient contact details not found", null, 404);
+        return handleServiceResponse(failure, res);
+      }
+      const validationResult = await validateContact(mobileNumber, countryCode, patientContact, res);
+
+      if (validationResult !== true) {
+        return;
       }
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const expiry = new Date(Date.now() + 5 * 60 * 1000);
-      await patientCosmosRepository.updateOtpAsync(existing.id as any, otp, expiry);
 
-      // send via SMS if phone present
-      if (existing.phoneCountryCode && existing.phoneNumber) {
-        const to = `${existing.phoneCountryCode}${existing.phoneNumber}`;
-        const message = `Your login OTP is: ${otp}. It expires in 5 minutes.`;
-        try {
-          await sendMessage(to, message);
-        } catch (smsErr) {
-          console.error("SMS send failed", smsErr);
-        }
-      }
+      setOtpForPatient(patientId, otp, 300);
 
-      // also send via email if present
-      if (existing.email) {
-        try {
-          await sendEmail(existing.email, "Your OTP code", `Your login OTP is: ${otp}. It expires in 5 minutes.`);
-        } catch (emailErr) {
-          console.error("Email send failed", emailErr);
-        }
-      }
+      const response = await axios.post(`${MAIN_NODE_API_URL}/patient/sendSmsEmailLoginOtp`, {
+        patientName: patientContact.patientName,
+        email: patientContact.email,
+        countryCode,
+        mobileNumber,
+        otp,
+      });
 
-      const success = (await import("@/common/models/serviceResponse")).ServiceResponse.success("OTP sent", {
+      const success = myResponse.success("OTP sent", {
         message: "OTP sent",
+        otp: process.env.NODE_ENV === "production" ? undefined : otp,
+        expiry,
       });
       return handleServiceResponse(success, res);
     } catch (ex) {
-      const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-        "Error sending OTP",
-        null,
-        500,
-      );
-      return handleServiceResponse(failure, res);
-    }
-  };
-
-  // Resend OTP - same as sendOtp but kept separate for clarity
-  public resendOtp: RequestHandler = async (req: Request, res: Response) => {
-    try {
-      const { patientId } = req.body as { patientId: number };
-      // Reuse sendOtp logic by delegating (cast to any to satisfy TS when invoking RequestHandler)
-      await (this.sendOtp as any)(req, res);
-      return;
-    } catch (ex) {
-      const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-        "Error resending OTP",
-        null,
-        500,
-      );
+      const failure = myResponse.failure("Error sending OTP", null, 500);
       return handleServiceResponse(failure, res);
     }
   };
 
   public verifyOtp: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const { patientId, otp } = req.body as { patientId: number; otp: string };
-      const existing = await patientCosmosRepository.findByIdAsync(patientId);
-      if (!existing) {
-        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-          "User not found",
-          null,
-          404,
-        );
+      const { patientId, otp } = req.body as { patientId: string; otp: string };
+
+      const patientContact = await getPatientContact(patientId);
+      if (!patientContact.mobileNumber || !patientContact.countryCode) {
+        const failure = myResponse.failure("Patient contact details not found", null, 404);
         return handleServiceResponse(failure, res);
       }
 
-      // @ts-ignore
-      if (!existing.otp || (existing.otp as string) !== otp) {
-        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-          "Invalid OTP",
-          null,
-          400,
-        );
+      const cachedOtp = getOtpForPatient(patientId);
+      if (!cachedOtp) {
+        const failure = myResponse.failure("OTP expired or not found", null, 400);
         return handleServiceResponse(failure, res);
       }
 
-      // @ts-ignore
-      const expiry = existing.otpExpiry ? new Date(existing.otpExpiry) : null;
-      if (!expiry || expiry < new Date()) {
-        const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-          "OTP expired",
-          null,
-          400,
-        );
+      if (cachedOtp !== otp) {
+        const failure = myResponse.failure("Invalid OTP", null, 400);
         return handleServiceResponse(failure, res);
       }
 
-      const token = jwt.sign(
-        { sub: existing.id, phone: `${existing.phoneCountryCode || ""}${existing.phoneNumber || ""}` },
-        env.JWT_SECRET,
-        { expiresIn: "1h" },
-      );
-      const success = (await import("@/common/models/serviceResponse")).ServiceResponse.success("OTP verified", {
-        token,
+      // OTP is valid - remove it from cache to prevent replay
+      deleteOtpForPatient(patientId);
+
+      const success = myResponse.success("OTP verified", {
+        OTPVerified: true,
       });
       return handleServiceResponse(success, res);
     } catch (ex) {
-      const failure = (await import("@/common/models/serviceResponse")).ServiceResponse.failure(
-        "Error verifying OTP",
-        null,
-        500,
-      );
+      const failure = myResponse.failure("Error verifying OTP", null, 500);
       return handleServiceResponse(failure, res);
     }
   };

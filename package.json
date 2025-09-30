@@ -19,9 +19,8 @@
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.0.0",
     "@azure/cosmos": "^4.5.1",
-    "twilio": "^4.8.0",
-
     "@types/node": "^22.13.16",
+    "axios": "^1.12.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -32,11 +31,12 @@
     "http-proxy-middleware": "^3.0.3",
     "http-status-codes": "^2.3.0",
     "jsonwebtoken": "^9.0.0",
-
+    "node-cache": "^5.1.2",
     "pino": "^9.4.0",
     "pino-http": "^10.0.0",
     "swagger-ui-express": "^5.0.0",
     "ts-node": "^10.9.2",
+    "twilio": "^4.8.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
