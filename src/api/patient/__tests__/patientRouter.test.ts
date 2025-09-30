@@ -53,28 +53,4 @@ describe("Patient API Endpoints", () => {
       expect((responseBody.responseObject as any).email).toEqual(payload.email);
     });
   });
-
-  describe("POST /patients/login", () => {
-    it("should accept valid login and return token", async () => {
-      const payload = { email: testEmail, password: "secret123" };
-      const response = await request(app).post("/patients/login").send(payload);
-      const responseBody: myResponse = response.body;
-
-      expect(response.statusCode).toEqual(StatusCodes.OK);
-      expect(responseBody.success).toBeTruthy();
-      expect(responseBody.responseObject).toBeDefined();
-      expect((responseBody.responseObject as any).token).toBeTruthy();
-    });
-  });
-
-  describe("POST /patients/login (OTP)", () => {
-    it("should send OTP when email exists", async () => {
-      const payload = { email: testEmail };
-      const response = await request(app).post("/patients/login").send(payload);
-      const responseBody: myResponse = response.body;
-
-      expect(response.statusCode).toEqual(StatusCodes.OK);
-      expect(responseBody.success).toBeTruthy();
-    });
-  });
 });

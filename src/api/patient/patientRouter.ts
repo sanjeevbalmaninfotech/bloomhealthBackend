@@ -87,18 +87,6 @@ patientRegistry.registerPath({
 
 patientRegistry.registerPath({
   method: "post",
-  path: "/patients/login",
-  tags: ["Patient"],
-  request: {
-    body: {
-      content: { "application/json": { schema: LoginSchema.shape.body } },
-    },
-  },
-  responses: createApiResponse(z.object({ token: z.string().optional() }), "Success"),
-});
-
-patientRegistry.registerPath({
-  method: "post",
   path: "/patients/sendOtp",
   tags: ["Patient"],
   request: {
@@ -144,9 +132,6 @@ patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientC
 patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientController.matchLoginId);
 
 patientRouter.post("/sendOtp", validateRequest(SendOtpSchema), patientController.sendOtp);
-
-// Compatibility route: tests expect POST /patients/login
-patientRouter.post("/login", validateRequest(LoginSchema), patientController.login);
 
 patientRouter.post("/verifyOtp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
 // Accept only the canonical routes (/verifyOtp)

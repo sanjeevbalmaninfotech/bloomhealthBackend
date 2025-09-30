@@ -82,10 +82,4 @@ export const PhoneLoginBody = z
   })
   .openapi({ title: "PhoneLoginBody" });
 
-// Compatibility schema for tests/clients that POST to /patients/login
-export const LoginSchema = z.object({
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().optional(),
-  }),
-});
+// Compatibility schema for tes/logints/clients that POST to /patients
