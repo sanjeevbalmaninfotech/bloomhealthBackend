@@ -110,3 +110,5 @@ patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientControl
 patientRouter.post("/sendOtp", validateRequest(SendOtpSchema), patientController.sendOtp);
 
 patientRouter.post("/verifyOtp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
+// Accept hyphenated route variant for clients/tests that use `verify-otp`
+patientRouter.post("/verify-otp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
