@@ -14,9 +14,13 @@ export class UserService {
   }
 
   // Retrieves all users from the database
-  async findAll(): Promise<myResponse<[] | null>> {
+  async findAll(): Promise<myResponse<User[] | null>> {
     try {
-      return myResponse.success<[]>("Users found", []);
+      const users = await this.userRepository.findAllAsync();
+      if (!users || users.length === 0) {
+        return myResponse.failure("No Users found", null, StatusCodes.NOT_FOUND);
+      }
+      return myResponse.success<User[]>("Users found", users);
     } catch (ex) {
       const errorMessage = `Error finding all users: $${(ex as Error).message}`;
       logger.error(errorMessage);

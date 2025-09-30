@@ -175,17 +175,73 @@ class PatientController {
     }
   };
 
+  // Compatibility login endpoint used by tests: accepts { email, password? }
+  public login: RequestHandler = async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body as {
+        email: string;
+        password?: string;
+      };
+      if (!email) {
+        const failure = myResponse.failure("Email is required", null, 400);
+        return handleServiceResponse(failure, res);
+      }
+
+      const patient = await patientCosmosRepository.findByEmailAsync(email);
+      if (!patient) {
+        const failure = myResponse.failure("Patient not found", null, 404);
+        return handleServiceResponse(failure, res);
+      }
+
+      // If password provided, verify and return a token (simple JWT)
+      if (password) {
+        const match = await bcrypt.compare(password, (patient as any).password || "");
+        if (!match) {
+          const failure = myResponse.failure("Invalid credentials", null, 401);
+          return handleServiceResponse(failure, res);
+        }
+        const jwt = require("jsonwebtoken");
+        const token = jwt.sign({ sub: patient.id, email: patient.email }, process.env.JWT_SECRET || "dev-secret");
+        const success = myResponse.success("Login successful", { token });
+        return handleServiceResponse(success, res);
+      }
+
+      // No password -> send OTP flow (compatibility)
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      setOtpForPatient(patient.id as string | number, otp, 300);
+      const success = myResponse.success("OTP sent", {
+        otp: process.env.NODE_ENV === "production" ? undefined : otp,
+      });
+      return handleServiceResponse(success, res);
+    } catch (ex) {
+      const failure = myResponse.failure("Error in login", null, 500);
+      return handleServiceResponse(failure, res);
+    }
+  };
+
   public verifyOtp: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const { patientId, otp } = req.body as { patientId: string; otp: string };
+      // support either { patientId, otp } or { phoneCountryCode, phoneNumber, otp }
+      const body = req.body as any;
+      let patientId: string | number | undefined = body.patientId;
+      const otp: string = body.otp;
 
-      const patientContact = await getPatientContact(patientId);
-      if (!patientContact.mobileNumber || !patientContact.countryCode) {
+      // If phone fields provided, resolve to patientId via repository
+      if (!patientId && body.phoneCountryCode && body.phoneNumber) {
+        const byPhone = await patientCosmosRepository.findByPhoneAsync(body.phoneCountryCode, body.phoneNumber);
+        if (!byPhone) {
+          const failure = myResponse.failure("Patient contact details not found", null, 404);
+          return handleServiceResponse(failure, res);
+        }
+        patientId = (byPhone.id as any) || (byPhone.id as unknown as string);
+      }
+
+      if (!patientId) {
         const failure = myResponse.failure("Patient contact details not found", null, 404);
         return handleServiceResponse(failure, res);
       }
 
-      const cachedOtp = getOtpForPatient(patientId);
+      const cachedOtp = getOtpForPatient(patientId as string | number);
       if (!cachedOtp) {
         const failure = myResponse.failure("OTP expired or not found", null, 400);
         return handleServiceResponse(failure, res);

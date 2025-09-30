@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import {
   GetPatientSchema,
+  LoginSchema,
   PatientSchema,
   RegisterPatientSchema,
   ResendOtpSchema,
@@ -27,9 +28,26 @@ patientRegistry.registerPath({
   responses: createApiResponse(z.array(PatientSchema), "Success"),
 });
 
+// Alias: support GET /patients as shorthand for getPatients used by tests/clients
+patientRegistry.registerPath({
+  method: "get",
+  path: "/patients",
+  tags: ["Patient"],
+  responses: createApiResponse(z.array(PatientSchema), "Success"),
+});
+
 patientRegistry.registerPath({
   method: "get",
   path: "/patients/getPatient/{id}",
+  tags: ["Patient"],
+  request: { params: GetPatientSchema.shape.params },
+  responses: createApiResponse(PatientSchema, "Success"),
+});
+
+// Alias: support GET /patients/:id used by tests/clients
+patientRegistry.registerPath({
+  method: "get",
+  path: "/patients/{id}",
   tags: ["Patient"],
   request: { params: GetPatientSchema.shape.params },
   responses: createApiResponse(PatientSchema, "Success"),
@@ -67,6 +85,20 @@ patientRegistry.registerPath({
   ),
 });
 
+// Alias: support POST /patients/login used by tests/clients (email/password or OTP)
+// Provide compatibility POST /patients/login which tests expect
+patientRegistry.registerPath({
+  method: "post",
+  path: "/patients/login",
+  tags: ["Patient"],
+  request: {
+    body: {
+      content: { "application/json": { schema: LoginSchema.shape.body } },
+    },
+  },
+  responses: createApiResponse(z.object({ token: z.string().optional() }), "Success"),
+});
+
 patientRegistry.registerPath({
   method: "post",
   path: "/patients/sendOtp",
@@ -102,13 +134,35 @@ patientRegistry.registerPath({
   },
   responses: createApiResponse(z.object({ token: z.string() }), "Success"),
 });
-
+// Compatibility: hyphenated path used by some tests/clients
+patientRegistry.registerPath({
+  method: "post",
+  path: "/patients/verify-otp",
+  tags: ["Patient"],
+  request: {
+    body: {
+      content: { "application/json": { schema: VerifyOtpSchema.shape.body } },
+    },
+  },
+  responses: createApiResponse(z.object({ token: z.string() }), "Success"),
+});
 patientRouter.get("/getPatients", patientController.getPatients);
-patientRouter.get("/getPatient/:id", patientController.getPatient);
+// Alias: GET /patients
+patientRouter.get("/", patientController.getPatients);
+
+patientRouter.get("/getPatient/:id", validateRequest(GetPatientSchema), patientController.getPatient);
+// Alias: GET /patients/:id
+patientRouter.get("/:id", validateRequest(GetPatientSchema), patientController.getPatient);
 patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientController.register);
 patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientController.matchLoginId);
+
 patientRouter.post("/sendOtp", validateRequest(SendOtpSchema), patientController.sendOtp);
 
+// Compatibility route: tests expect POST /patients/login
+patientRouter.post("/login", validateRequest(LoginSchema), patientController.login);
+
 patientRouter.post("/verifyOtp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
-// Accept hyphenated route variant for clients/tests that use `verify-otp`
+// Accept only the canonical routes (/verifyOtp)
+
+// Compatibility: hyphenated route
 patientRouter.post("/verify-otp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);

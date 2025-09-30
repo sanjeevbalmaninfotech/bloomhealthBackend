@@ -43,10 +43,17 @@ export const RegisterPatientSchema = z.object({
 
 // For auth flows we accept patientId as either string or number (clients often send strings)
 export const VerifyOtpSchema = z.object({
-  body: z.object({
-    patientId: z.union([z.string(), z.number()]),
-    otp: z.string().min(4),
-  }),
+  body: z.union([
+    z.object({
+      patientId: z.union([z.string(), z.number()]),
+      otp: z.string().min(4),
+    }),
+    z.object({
+      phoneCountryCode: z.string().min(1),
+      phoneNumber: z.string().min(4),
+      otp: z.string().min(4),
+    }),
+  ]),
 });
 
 export const StartLoginSchema = z.object({
@@ -69,5 +76,16 @@ export const ResendOtpSchema = z.object({
 
 export const EmailLoginBody = z.object({ email: z.string().email() }).openapi({ title: "EmailLoginBody" });
 export const PhoneLoginBody = z
-  .object({ phoneCountryCode: z.string().min(1), phoneNumber: z.string().min(4) })
+  .object({
+    phoneCountryCode: z.string().min(1),
+    phoneNumber: z.string().min(4),
+  })
   .openapi({ title: "PhoneLoginBody" });
+
+// Compatibility schema for tests/clients that POST to /patients/login
+export const LoginSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    password: z.string().optional(),
+  }),
+});
