@@ -132,18 +132,7 @@ patientRegistry.registerPath({
   },
   responses: createApiResponse(z.object({ token: z.string() }), "Success"),
 });
-// Compatibility: hyphenated path used by some tests/clients
-patientRegistry.registerPath({
-  method: "post",
-  path: "/patients/verify-otp",
-  tags: ["Patient"],
-  request: {
-    body: {
-      content: { "application/json": { schema: VerifyOtpSchema.shape.body } },
-    },
-  },
-  responses: createApiResponse(z.object({ token: z.string() }), "Success"),
-});
+
 patientRouter.get("/getPatients", patientController.getPatients);
 // Alias: GET /patients
 patientRouter.get("/", patientController.getPatients);
