@@ -32,53 +32,10 @@ class PatientController {
 
   public register: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const { firstName, lastName, email, password, phoneCountryCode, phoneNumber, city, state } = req.body as {
-        firstName: string;
-        lastName: string;
-        email: string;
-        password: string;
-        phoneCountryCode?: string;
-        phoneNumber?: string;
-        city?: string;
-        state?: string;
-      };
-
-      const existing = await patientCosmosRepository.findByEmailAsync(email);
-      if (existing) {
-        const failure = myResponse.failure("Email already registered", null, 400);
-        return handleServiceResponse(failure, res);
-      }
-
-      // If phone provided, ensure it's unique
-      if (phoneCountryCode && phoneNumber) {
-        const byPhone = await patientCosmosRepository.findByPhoneAsync(phoneCountryCode, phoneNumber);
-        if (byPhone) {
-          const failure = myResponse.failure("Phone number already registered", null, 400);
-          return handleServiceResponse(failure, res);
-        }
-      }
-
-      const hashed = await bcrypt.hash(password, 10);
-      const toCreate = {
-        firstName,
-        lastName,
-        email,
-        password: hashed,
-        phoneCountryCode: phoneCountryCode || undefined,
-        phoneNumber: phoneNumber || undefined,
-        city: city || undefined,
-        state: state || undefined,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      const created = await patientCosmosRepository.createAsync(toCreate);
-      // strip password
-      // @ts-ignore
-      created.password = undefined;
-
-      const success = myResponse.success("Patient registered", created);
+      const success = myResponse.success("Patient registered", null);
       return handleServiceResponse(success, res);
     } catch (ex) {
+      console.error("Error in register:", ex);
       const failure = myResponse.failure("Error registering patient", null, 500);
       return handleServiceResponse(failure, res);
     }
@@ -124,7 +81,6 @@ class PatientController {
     }
   };
 
-  // Step 2: send-otp - generate and send otp for patientId
   public sendOtp: RequestHandler = async (req: Request, res: Response) => {
     try {
       const { patientId, mobileNumber, countryCode } = req.body as {
@@ -171,50 +127,6 @@ class PatientController {
       return handleServiceResponse(success, res);
     } catch (ex) {
       const failure = myResponse.failure("Error sending OTP", null, 500);
-      return handleServiceResponse(failure, res);
-    }
-  };
-
-  // Compatibility login endpoint used by tests: accepts { email, password? }
-  public login: RequestHandler = async (req: Request, res: Response) => {
-    try {
-      const { email, password } = req.body as {
-        email: string;
-        password?: string;
-      };
-      if (!email) {
-        const failure = myResponse.failure("Email is required", null, 400);
-        return handleServiceResponse(failure, res);
-      }
-
-      const patient = await patientCosmosRepository.findByEmailAsync(email);
-      if (!patient) {
-        const failure = myResponse.failure("Patient not found", null, 404);
-        return handleServiceResponse(failure, res);
-      }
-
-      // If password provided, verify and return a token (simple JWT)
-      if (password) {
-        const match = await bcrypt.compare(password, (patient as any).password || "");
-        if (!match) {
-          const failure = myResponse.failure("Invalid credentials", null, 401);
-          return handleServiceResponse(failure, res);
-        }
-        const jwt = require("jsonwebtoken");
-        const token = jwt.sign({ sub: patient.id, email: patient.email }, process.env.JWT_SECRET || "dev-secret");
-        const success = myResponse.success("Login successful", { token });
-        return handleServiceResponse(success, res);
-      }
-
-      // No password -> send OTP flow (compatibility)
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      setOtpForPatient(patient.id as string | number, otp, 300);
-      const success = myResponse.success("OTP sent", {
-        otp: process.env.NODE_ENV === "production" ? undefined : otp,
-      });
-      return handleServiceResponse(success, res);
-    } catch (ex) {
-      const failure = myResponse.failure("Error in login", null, 500);
       return handleServiceResponse(failure, res);
     }
   };

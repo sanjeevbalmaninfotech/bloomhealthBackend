@@ -27,7 +27,6 @@ patientRegistry.registerPath({
   responses: createApiResponse(z.array(PatientSchema), "Success"),
 });
 
-// Alias: support GET /patients as shorthand for getPatients used by tests/clients
 patientRegistry.registerPath({
   method: "get",
   path: "/patients",
@@ -121,8 +120,8 @@ patientRegistry.registerPath({
 });
 
 patientRouter.get("/getPatients", patientController.getPatients);
-// Alias: GET /patients
-patientRouter.get("/", patientController.getPatients);
+
+// patientRouter.get("/", patientController.getPatients);
 
 patientRouter.get("/getPatient/:id", validateRequest(GetPatientSchema), patientController.getPatient);
 // Alias: GET /patients/:id
@@ -133,4 +132,3 @@ patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientControl
 patientRouter.post("/sendOtp", validateRequest(SendOtpSchema), patientController.sendOtp);
 
 patientRouter.post("/verifyOtp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
-// Accept only the canonical routes (/verifyOtp)

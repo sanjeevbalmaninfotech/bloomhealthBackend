@@ -1,11 +1,10 @@
 import NodeCache from "node-cache";
 
-// 5 minutes TTL (300 seconds)
 const otpCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
 export const setOtpForPatient = (patientId: string | number, otp: string, ttlSeconds?: number) => {
   const key = `patient_otp_${patientId}`;
-  // If provided ttlSeconds use NodeCache ttl option per-set
+
   if (ttlSeconds) {
     otpCache.set(key, otp, ttlSeconds);
   } else {

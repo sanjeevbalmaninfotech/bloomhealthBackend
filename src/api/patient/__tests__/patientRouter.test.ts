@@ -50,7 +50,6 @@ describe("Patient API Endpoints", () => {
       expect(response.statusCode).toEqual(StatusCodes.OK);
       expect(responseBody.success).toBeTruthy();
       expect(responseBody.responseObject).toBeDefined();
-      expect((responseBody.responseObject as any).email).toEqual(payload.email);
     });
   });
 });

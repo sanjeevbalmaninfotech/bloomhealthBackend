@@ -7,7 +7,6 @@ extendZodWithOpenApi(z);
 
 export type Patient = z.infer<typeof PatientSchema>;
 export const PatientSchema = z.object({
-  // allow id to be string or number because request bodies often send IDs as strings
   id: z.union([z.string(), z.number()]),
   firstName: z.string(),
   lastName: z.string(),
