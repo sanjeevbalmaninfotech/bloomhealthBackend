@@ -29,23 +29,7 @@ patientRegistry.registerPath({
 
 patientRegistry.registerPath({
   method: "get",
-  path: "/patients",
-  tags: ["Patient"],
-  responses: createApiResponse(z.array(PatientSchema), "Success"),
-});
-
-patientRegistry.registerPath({
-  method: "get",
   path: "/patients/getPatient/{id}",
-  tags: ["Patient"],
-  request: { params: GetPatientSchema.shape.params },
-  responses: createApiResponse(PatientSchema, "Success"),
-});
-
-// Alias: support GET /patients/:id used by tests/clients
-patientRegistry.registerPath({
-  method: "get",
-  path: "/patients/{id}",
   tags: ["Patient"],
   request: { params: GetPatientSchema.shape.params },
   responses: createApiResponse(PatientSchema, "Success"),
@@ -121,11 +105,8 @@ patientRegistry.registerPath({
 
 patientRouter.get("/getPatients", patientController.getPatients);
 
-// patientRouter.get("/", patientController.getPatients);
-
 patientRouter.get("/getPatient/:id", validateRequest(GetPatientSchema), patientController.getPatient);
-// Alias: GET /patients/:id
-patientRouter.get("/:id", validateRequest(GetPatientSchema), patientController.getPatient);
+
 patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientController.register);
 patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientController.matchLoginId);
 

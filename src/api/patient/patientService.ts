@@ -4,8 +4,11 @@ import { patientCosmosRepository } from "@/api/patient/patientCosmosRepository";
 import type { Patient } from "@/api/patient/patientModel";
 
 import { myResponse } from "@/common/models/serviceResponse";
+import { env } from "@/common/utils/envConfig";
 import { logger } from "@/server";
+import axios from "axios";
 
+const MAIN_NODE_API_URL = env.MAIN_NODE_API_URL;
 export class PatientService {
   private patientRepository = patientCosmosRepository as any;
 
@@ -40,6 +43,19 @@ export class PatientService {
       return myResponse.failure("An error occurred while finding patient.", null, StatusCodes.INTERNAL_SERVER_ERROR);
     }
   }
+  async register(patientData: Partial<Patient>): Promise<myResponse<Patient | null>> {
+    try {
+      const response = await axios.post(`${MAIN_NODE_API_URL}`, patientData);
+      return myResponse.success<Patient>("Patient registered", response.data);
+    } catch (ex) {
+      const errorMessage = `Error registering patient: ${(ex as Error).message}`;
+      logger.error(errorMessage);
+      return myResponse.failure(
+        "An error occurred while registering patient.",
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
-
 export const patientService = new PatientService();

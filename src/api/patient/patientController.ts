@@ -32,8 +32,8 @@ class PatientController {
 
   public register: RequestHandler = async (req: Request, res: Response) => {
     try {
-      const success = myResponse.success("Patient registered", null);
-      return handleServiceResponse(success, res);
+      const serviceResponse = await patientService.register(req.body);
+      return handleServiceResponse(serviceResponse, res);
     } catch (ex) {
       console.error("Error in register:", ex);
       const failure = myResponse.failure("Error registering patient", null, 500);
