@@ -43,6 +43,54 @@ export class DoctorService {
       return myResponse.failure("Error finding department", null, 500);
     }
   }
-}
 
+  async getDoctorByDepartmentId(departmentId: string): Promise<myResponse<any>> {
+    try {
+      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getDoctorByDepartmentIdUrl}${departmentId}`);
+      if (!response || response.status !== 200) {
+        return myResponse.failure("Error finding doctors", null, 500);
+      }
+      if (response.data.length === 0) {
+        return myResponse.failure("No doctors found for this department", null, StatusCodes.NOT_FOUND);
+      }
+      return myResponse.success("Doctors found", response.data);
+    } catch (ex) {
+      console.error("Error in getDoctorByDepartmentId:", ex);
+      return myResponse.failure("Error finding doctors", null, 500);
+    }
+  }
+
+  async bookAppointment(appointmentDetails: any): Promise<myResponse<any>> {
+    try {
+      const axiosResponse = await axios.post(`${MAIN_NODE_API_URL}${Endpoints.bookAppointmentUrl}`, appointmentDetails);
+
+      const status = axiosResponse?.status ?? 200;
+      const data = axiosResponse?.data ?? null;
+
+      if (data && typeof data === "object" && "success" in data && "statusCode" in data) {
+        return data as myResponse<any>;
+      }
+
+      return myResponse.success("Appointment booked", data, status);
+    } catch (ex) {
+      console.error("Error in bookAppointment - : -", ex);
+      const err = ex as any;
+      if (err?.response) {
+        const resp = err?.response;
+        const status = resp?.status ?? 500;
+        const data = resp?.data ?? null;
+
+        if (data && typeof data === "object" && "success" in data && "statusCode" in data) {
+          return data as myResponse<any>;
+        }
+
+        const message = data?.message || "Error booking appointment";
+
+        return myResponse.failure(message, data, status);
+      }
+
+      return myResponse.failure("Error booking appointment", null, 500);
+    }
+  }
+}
 export const doctorService = new DoctorService();

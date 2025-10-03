@@ -27,19 +27,6 @@ export const GetPatientSchema = z.object({
   params: z.object({ id: commonValidations.id }),
 });
 
-// Request body schemas for auth endpoints
-export const RegisterPatientSchema = z.object({
-  body: z.object({
-    firstName: z.string().min(1),
-    lastName: z.string().min(1),
-    email: z.string().email(),
-    phoneCountryCode: z.string().optional(),
-    phoneNumber: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-  }),
-});
-
 // For auth flows we accept patientId as either string or number (clients often send strings)
 export const VerifyOtpSchema = z.object({
   body: z.union([

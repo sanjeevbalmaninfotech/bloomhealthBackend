@@ -44,6 +44,7 @@ class PatientController {
   // Step 1: start-login - return masked phone details for given user id
   public matchLoginId: RequestHandler = async (req: Request, res: Response) => {
     try {
+      console.log("matchLoginId called with body:", req.body);
       const body = req.body as { patientId?: string | number };
       const patientId = body.patientId;
       if (!patientId) {
@@ -126,7 +127,7 @@ class PatientController {
       });
       return handleServiceResponse(success, res);
     } catch (ex) {
-      const failure = myResponse.failure("Error sending OTP", null, 500);
+      const failure = myResponse.failure("Error sending OTP", ex, 400);
       return handleServiceResponse(failure, res);
     }
   };

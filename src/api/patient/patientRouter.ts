@@ -6,7 +6,6 @@ import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
 import {
   GetPatientSchema,
   PatientSchema,
-  RegisterPatientSchema,
   ResendOtpSchema,
   SendOtpSchema,
   StartLoginSchema,
@@ -42,7 +41,7 @@ patientRegistry.registerPath({
   request: {
     body: {
       content: {
-        "application/json": { schema: RegisterPatientSchema.shape.body },
+        // "application/json": { schema: PatientSchema.omit({ id: true, createdAt: true, updatedAt: true }) },
       },
     },
   },
@@ -107,7 +106,7 @@ patientRouter.get("/getPatients", patientController.getPatients);
 
 patientRouter.get("/getPatient/:id", validateRequest(GetPatientSchema), patientController.getPatient);
 
-patientRouter.post("/register", validateRequest(RegisterPatientSchema), patientController.register);
+patientRouter.post("/register", patientController.register);
 patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientController.matchLoginId);
 
 patientRouter.post("/sendOtp", validateRequest(SendOtpSchema), patientController.sendOtp);

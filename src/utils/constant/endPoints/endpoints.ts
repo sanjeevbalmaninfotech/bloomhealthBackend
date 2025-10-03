@@ -1,3 +1,5 @@
+import { BookAppointmentSchema } from "@/api/doctor/doctorModel";
+
 export const Endpoints = {
   getPatientsUrl: "/patient/getPatients",
 
@@ -8,6 +10,7 @@ export const Endpoints = {
   verifyOtpUrl: "/patient/verifyOtp",
   getAllDoctorsUrl: "/bloomPatient/getAllDoctors",
   getSingleDoctorUrl: "/bloomPatient/doctors/",
-
+  getDoctorByDepartmentIdUrl: "/bloomPatient/getDoctorByDepartmentId/",
+  bookAppointmentUrl: "/patient/appointments",
   getSingleDepartmentUrl: "/bloomPatient/departments/",
 };
