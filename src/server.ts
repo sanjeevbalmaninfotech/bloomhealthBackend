@@ -4,9 +4,9 @@ import helmet from "helmet";
 import { pino } from "pino";
 
 import { openAPIRouter } from "@/api-docs/openAPIRouter";
-import { doctorRouter } from "@/api/doctor/doctorRouter";
+import doctorRouter from "@/api/doctor/doctorRouter";
 import { healthCheckRouter } from "@/api/healthCheck/healthCheckRouter";
-import { patientRouter } from "@/api/patient/patientRouter";
+import patientRouter from "@/api/patient/patientRouter";
 import { userRouter } from "@/api/user/userRouter";
 import errorHandler from "@/common/middleware/errorHandler";
 import rateLimiter from "@/common/middleware/rateLimiter";
