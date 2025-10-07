@@ -3,14 +3,27 @@ import { StatusCodes } from "http-status-codes";
 
 import { env } from "@/common/utils/envConfig";
 import { Endpoints } from "@/utils/constant/endPoints/endpoints";
+import { getTokenFromNodeBackend } from "@/utils/getToken/getToken";
 import axios from "axios";
 import type { Doctor } from "./doctorModel";
 
 const MAIN_NODE_API_URL = env.MAIN_NODE_API_URL;
+const NODE_TOKEN_GENERATION_ID = env.NODE_TOKEN_GENERATION_ID;
+const NODE_TOKEN_GENERATION_SECRET = env.NODE_TOKEN_GENERATION_SECRET;
+const payload = {
+  tokenId: NODE_TOKEN_GENERATION_ID,
+  tokenKey: NODE_TOKEN_GENERATION_SECRET,
+};
 export class DoctorService {
   async getAllDoctors(): Promise<myResponse<Doctor[] | null>> {
     try {
-      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getAllDoctorsUrl}`);
+      const tokenResponse = await getTokenFromNodeBackend();
+
+      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getAllDoctorsUrl}`, {
+        headers: {
+          Authorization: `Bearer ${tokenResponse}`,
+        },
+      });
       if (!response || response.status !== 200) {
         return myResponse.failure("Error finding doctors", null, 500);
       }
@@ -22,7 +35,12 @@ export class DoctorService {
 
   async getDoctorById(id: string | number): Promise<myResponse<Doctor | null>> {
     try {
-      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getSingleDoctorUrl}${id}`);
+      const tokenResponse = await getTokenFromNodeBackend();
+      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getSingleDoctorUrl}${id}`, {
+        headers: {
+          Authorization: `Bearer ${tokenResponse}`,
+        },
+      });
       if (!response || response.status !== 200) {
         return myResponse.failure("Error finding doctor", null, 500);
       }
@@ -34,7 +52,12 @@ export class DoctorService {
 
   async getDepartmentsById(id: string | number): Promise<myResponse<Doctor | null>> {
     try {
-      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getSingleDepartmentUrl}${id}`);
+      const tokenResponse = await getTokenFromNodeBackend();
+      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getSingleDepartmentUrl}${id}`, {
+        headers: {
+          Authorization: `Bearer ${tokenResponse}`,
+        },
+      });
       if (!response || response.status !== 200) {
         return myResponse.failure("Error finding department", null, 500);
       }
@@ -46,7 +69,14 @@ export class DoctorService {
 
   async getDoctorByDepartmentId(departmentId: string): Promise<myResponse<any>> {
     try {
-      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getDoctorByDepartmentIdUrl}${departmentId}`);
+      const tokenResponse = await getTokenFromNodeBackend();
+
+      const response = await axios.get(`${MAIN_NODE_API_URL}${Endpoints.getDoctorByDepartmentIdUrl}${departmentId}`, {
+        headers: {
+          Authorization: `Bearer ${tokenResponse}`,
+        },
+      });
+
       if (!response || response.status !== 200) {
         return myResponse.failure("Error finding doctors", null, 500);
       }
@@ -62,7 +92,16 @@ export class DoctorService {
 
   async bookAppointment(appointmentDetails: any): Promise<myResponse<any>> {
     try {
-      const axiosResponse = await axios.post(`${MAIN_NODE_API_URL}${Endpoints.bookAppointmentUrl}`, appointmentDetails);
+      const tokenResponse = await getTokenFromNodeBackend();
+      const axiosResponse = await axios.post(
+        `${MAIN_NODE_API_URL}${Endpoints.bookAppointmentUrl}`,
+        appointmentDetails,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenResponse}`,
+          },
+        },
+      );
 
       const status = axiosResponse?.status ?? 200;
       const data = axiosResponse?.data ?? null;
@@ -85,7 +124,6 @@ export class DoctorService {
         }
 
         const message = data?.message || "Error booking appointment";
-
         return myResponse.failure(message, data, status);
       }
 

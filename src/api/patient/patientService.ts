@@ -6,6 +6,7 @@ import type { Patient } from "@/api/patient/patientModel";
 import { myResponse } from "@/common/models/serviceResponse";
 import { env } from "@/common/utils/envConfig";
 import { logger } from "@/server";
+import { getTokenFromNodeBackend } from "@/utils/getToken/getToken";
 import axios from "axios";
 
 const MAIN_NODE_API_URL = env.MAIN_NODE_API_URL;
@@ -45,7 +46,12 @@ export class PatientService {
   }
   async register(patientData: Partial<Patient>): Promise<myResponse<Patient | null>> {
     try {
-      const response = await axios.post(`${MAIN_NODE_API_URL}/bloomPatient/register`, patientData);
+      const tokenResponse = await getTokenFromNodeBackend();
+      const response = await axios.post(`${MAIN_NODE_API_URL}/bloomPatient/register`, patientData, {
+        headers: {
+          Authorization: `Bearer ${tokenResponse}`,
+        },
+      });
 
       // Consider any 2xx status as success
       if (!response || response.status < 200 || response.status >= 300) {

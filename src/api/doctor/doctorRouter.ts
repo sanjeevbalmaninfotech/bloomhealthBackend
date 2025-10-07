@@ -3,6 +3,7 @@ import express, { type Router } from "express";
 import { z } from "zod";
 
 import { createApiResponse } from "@/api-docs/openAPIResponseBuilders";
+import { jwtAuth } from "@/common/middleware/auth";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { doctorController } from "./doctorController";
 import {
@@ -159,6 +160,9 @@ doctorRegistry.registerPath({
     },
   },
 });
+
+// Require JWT auth for doctors routes and enforce 1 minute max token age
+doctorRouter.use(jwtAuth({ maxAgeSeconds: 60 }));
 
 doctorRouter.get("/getDoctorByDepartmentId/:departmentId", doctorController.getDoctorByDepartmentId);
 doctorRouter.get("/", doctorController.getAll);

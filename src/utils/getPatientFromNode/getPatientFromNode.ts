@@ -1,5 +1,6 @@
 import { env } from "@/common/utils/envConfig";
 import axios from "axios";
+import { getTokenFromNodeBackend } from "../getToken/getToken";
 
 const MAIN_NODE_API_URL = env.MAIN_NODE_API_URL;
 export async function getPatientContact(patientId: string): Promise<{
@@ -9,7 +10,12 @@ export async function getPatientContact(patientId: string): Promise<{
   email: string | null;
 }> {
   try {
-    const response = await axios.get(`${MAIN_NODE_API_URL}/patient/${patientId}`);
+    const tokenResponse = await getTokenFromNodeBackend();
+    const response = await axios.get(`${MAIN_NODE_API_URL}/patient/${patientId}`, {
+      headers: {
+        Authorization: `Bearer ${tokenResponse}`,
+      },
+    });
     const results = response?.data?.data?.Results;
     const patientMobileNumber = results?.PhoneNumber ?? null;
     const patientCountryCode = results?.PhoneCode ?? null;

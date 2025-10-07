@@ -51,6 +51,8 @@ export const StartLoginSchema = z.object({
 export const SendOtpSchema = z.object({
   body: z.object({
     patientId: z.union([z.string(), z.number()]),
+    mobileNumber: z.string(),
+    countryCode: z.string(),
   }),
 });
 

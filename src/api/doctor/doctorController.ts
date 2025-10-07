@@ -31,7 +31,7 @@ class DoctorController {
   public bookAppointment: RequestHandler = async (req: Request, res: Response) => {
     try {
       const appointmentDetails = req.body;
-      console.log(" -- - - - - ", "");
+
       const appointmentBookedResponse = await doctorService.bookAppointment(appointmentDetails);
 
       return handleServiceResponse(appointmentBookedResponse, res);

@@ -11,6 +11,7 @@ import {
   StartLoginSchema,
   VerifyOtpSchema,
 } from "@/api/patient/patientModel";
+import { jwtAuth } from "@/common/middleware/auth";
 import { validateRequest } from "@/common/utils/httpHandlers";
 import { patientController } from "./patientController";
 
@@ -102,13 +103,13 @@ patientRegistry.registerPath({
   responses: createApiResponse(z.object({ token: z.string() }), "Success"),
 });
 
-patientRouter.get("/getPatients", patientController.getPatients);
-
-patientRouter.get("/getPatient/:id", validateRequest(GetPatientSchema), patientController.getPatient);
-
+// Public routes: register, loginId, sendOtp, verifyOtp, resendOtp
 patientRouter.post("/register", patientController.register);
 patientRouter.post("/loginId", validateRequest(StartLoginSchema), patientController.matchLoginId);
-
 patientRouter.post("/sendOtp", validateRequest(SendOtpSchema), patientController.sendOtp);
-
+patientRouter.post("/resendOtp", validateRequest(ResendOtpSchema), patientController.sendOtp);
 patientRouter.post("/verifyOtp", validateRequest(VerifyOtpSchema), patientController.verifyOtp);
+
+// Protect remaining patient routes
+patientRouter.get("/getPatients", jwtAuth(), patientController.getPatients);
+patientRouter.get("/getPatient/:id", jwtAuth(), validateRequest(GetPatientSchema), patientController.getPatient);

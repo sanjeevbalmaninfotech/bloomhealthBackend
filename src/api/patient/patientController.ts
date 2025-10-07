@@ -9,11 +9,13 @@ import { sendMessage } from "@/utils/sms";
 import bcrypt from "bcryptjs";
 
 import { deleteOtpForPatient, getOtpForPatient, setOtpForPatient } from "@/api/patient/otpCache";
+import { signToken } from "@/common/middleware/auth";
 import { myResponse, myResponseSchema } from "@/common/models/serviceResponse";
 import axios from "axios";
 
 import { getPatientContact } from "@/utils/getPatientFromNode/getPatientFromNode";
 import { validateContact } from "@/utils/getPatientFromNode/patientInfoValidation";
+import { getTokenFromNodeBackend } from "@/utils/getToken/getToken";
 
 const MAIN_NODE_API_URL = env.MAIN_NODE_API_URL;
 
@@ -51,8 +53,12 @@ class PatientController {
         const failure = myResponse.failure("patientId is required", null, 400);
         return handleServiceResponse(failure, res);
       }
-
-      const response = await axios.get(`${MAIN_NODE_API_URL}/patient/${patientId}`);
+      const tokenResponse = await getTokenFromNodeBackend();
+      const response = await axios.get(`${MAIN_NODE_API_URL}/patient/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${tokenResponse}`,
+        },
+      });
 
       const patientMobileNumber = response?.data?.data?.Results?.PhoneNumber;
       const patientCountryCode = response?.data?.data?.Results?.PhoneCode;
@@ -109,17 +115,25 @@ class PatientController {
 
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const expiry = new Date(Date.now() + 5 * 60 * 1000);
-
+      const tokenResponse = await getTokenFromNodeBackend();
       setOtpForPatient(patientId, otp, 300);
-
-      const response = await axios.post(`${MAIN_NODE_API_URL}/patient/sendSmsEmailLoginOtp`, {
-        patientName: patientContact.patientName,
-        email: patientContact.email,
-        countryCode,
-        mobileNumber,
-        otp,
-      });
-
+      console.log(" This is otp before sending:", otp);
+      const response = await axios.post(
+        `${MAIN_NODE_API_URL}/patient/sendSmsEmailLoginOtp`,
+        {
+          patientName: patientContact.patientName,
+          email: patientContact.email,
+          countryCode,
+          mobile: mobileNumber,
+          // otp,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${tokenResponse}`,
+          },
+        },
+      );
+      console.log("sendOtp called with body : =", otp);
       const success = myResponse.success("OTP sent", {
         message: "OTP sent",
         otp: process.env.NODE_ENV === "production" ? undefined : otp,
@@ -127,6 +141,7 @@ class PatientController {
       });
       return handleServiceResponse(success, res);
     } catch (ex) {
+      console.error("Error in sendOtp:", ex);
       const failure = myResponse.failure("Error sending OTP", ex, 400);
       return handleServiceResponse(failure, res);
     }
@@ -168,8 +183,10 @@ class PatientController {
       // OTP is valid - remove it from cache to prevent replay
       deleteOtpForPatient(patientId);
 
+      const token = signToken({ sub: patientId }, { expiresIn: "7d" });
       const success = myResponse.success("OTP verified", {
         OTPVerified: true,
+        token,
       });
       return handleServiceResponse(success, res);
     } catch (ex) {
