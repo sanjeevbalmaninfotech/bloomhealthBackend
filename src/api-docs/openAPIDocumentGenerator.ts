@@ -1,8 +1,8 @@
 import { OpenAPIRegistry, OpenApiGeneratorV3 } from "@asteasolutions/zod-to-openapi";
 
-import { doctorRegistry } from "@/api/doctor/doctorRouter";
+import { doctorRegistry } from "@/api/doctor/doctorDocs";
 import { healthCheckRegistry } from "@/api/healthCheck/healthCheckRouter";
-import { patientRegistry } from "@/api/patient/patientRouter";
+import { patientRegistry } from "@/api/patient/patientDocs";
 import { userRegistry } from "@/api/user/userRouter";
 
 export function generateOpenAPIDocument() {
